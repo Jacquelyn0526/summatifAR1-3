@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuiz Interaktif Adat Resam Kebudayaan JKKN</title>
+    <style>
+        :root {
+            --primary-color: #0f172a;
+            --accent-color: #ea580c;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #334155;
+            --success-color: #16a34a;
+            --error-color: #dc2626;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 25px;
+        }
+
+        .quiz-status {
+            background: #f1f5f9;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+        }
+
+        .question-card {
+            background: #fafafa;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .question-card.wrong-retry {
+            border: 2px solid #fecaca;
+            background: #fff5f5;
+        }
+
+        .question-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: var(--primary-color);
+        }
+
+        .options-list {
+            list-style: none;
+        }
+
+        .option-item {
+            margin-bottom: 8px;
+        }
+
+        .option-item label {
+            display: block;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .option-item input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .option-item label:hover {
+            background: #f8fafc;
+        }
+
+        .feedback {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .feedback.correct {
+            display: block;
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .feedback.wrong {
+            display: block;
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .action-container {
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .btn-submit {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(234, 88, 12, 0.2);
+        }
+
+        .btn-submit:hover {
+            background: #ea580c;
+        }
+
+        .result-box {
+            display: none;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .result-box h2 {
+            font-size: 1.2rem;
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            .container { padding: 15px; }
+            h1 { font-size: 1.3rem; }
+            .question-text { font-size: 0.9rem; }
+            .option-item label { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Kuiz Pengukuhan Adat Resam</h1>
+    <div class="subtitle">Persediaan Pertandingan Kebudayaan JKKN</div>
+
+    <div id="status-bar" class="quiz-status">Sila jawab semua 30 soalan di bawah.</div>
+
+    <form id="quiz-form">
+        <div id="questions-container"></div>
+
+        <div class="action-container">
+            <button type="button" id="submit-btn" class="btn-submit">SEMAK JAWAPAN KEBANGAAN</button>
+        </div>
+    </form>
+
+    <div id="result-container" class="result-box"></div>
+</div>
+
+<script>
+    const quizData = [
+        // --- MENEKA ADAT RESAM BERDASARKAN PETUNJUK ---
+        {
+            id: 1,
+            q: "Petunjuk: Tradisi menidurkan bayi dalam posisi duduk, popular di Bagan Serai, Perak menggunakan kain Haduk.",
+            options: ["Adat Menyambut Menantu", "Tarian Alai Bubu", "Adat Bapukung", "Adat Bermain Lukah"],
+            correct: 2,
+            hint: "Adat Bapukung diamalkan oleh masyarakat Banjar di Perak untuk menidurkan bayi dalam posisi duduk."
+        },
+        {
+            id: 2,
+            q: "Petunjuk: Melibatkan wakil pengantin lelaki menjemput pengantin perempuan selepas beberapa hari bersanding, diamalkan secara tertutup.",
+            options: ["Adat Bapukung", "Adat Menyambut Menantu Perempuan", "Tarian Alai Bubu", "Adat Melenggang Perut"],
+            correct: 1,
+            hint: "Menyambut Menantu Perempuan di Kelantan bermaksud mengalu-alukan pengantin perempuan ke dalam keluarga lelaki."
+        },
+        {
+            id: 3,
+            q: "Petunjuk: Dikenali juga sebagai 'Main Lukah' atau 'Bubu Mengalai' oleh etnik Bisaya di daerah Beaufort, Sabah.",
+            options: ["Adat Bapukung", "Adat Blarok", "Tarian Alai Bubu", "Adat Qailulah"],
+            correct: 2,
+            hint: "Tarian Alai Bubu merupakan tarian tradisional mistik masyarakat etnik Bisaya di Sabah."
+        },
+        {
+            id: 4,
+            q: "Petunjuk: Amalan menidurkan bayi yang dikaitkan rapat dengan konsep Sunnah 'Qailulah' (tidur sebentar pertengahan siang).",
+            options: ["Tarian Alai Bubu", "Adat Bapukung", "Adat Berarak Kelantan", "Adat Menyambut Menantu"],
+            correct: 1,
+            hint: "Bapukung diadakan di antara waktu pagi dan Zohor berlandaskan falsafah Qailulah."
+        },
+        {
+            id: 5,
+            q: "Petunjuk: Amalan yang melibatkan perbuatan 'blarok' (berarak) waris terdekat menghantar pengantin ke rumah lelaki.",
+            options: ["Adat Bapukung", "Tarian Alai Bubu", "Adat Menyambut Menantu Perempuan", "Adat Bertunang"],
+            correct: 2,
+            hint: "Dalam adat menyambut menantu di Kelantan, pihak perempuan akan 'blarok' ke rumah pengantin lelaki."
+        },
+        {
+            id: 6,
+            q: "Petunjuk: Menggunakan peralatan menangkap ikan yang dihias seperti wanita dan ditarikan dalam upacara ritual.",
+            options: ["Adat Bapukung", "Tarian Alai Bubu", "Adat Menyambut Menantu", "Adat Khatam Al-Quran"],
+            correct: 1,
+            hint: "Tarian Alai Bubu menggunakan bubu (alat menangkap ikan) yang dihias pakaian wanita."
+        },
+        {
+            id: 7,
+            q: "Petunjuk: Amalan yang mana sekumpulan wanita mendendangkan lagu dalam dialek Banjar diselang-seli dengan selawat.",
+            options: ["Tarian Alai Bubu", "Adat Menyambut Menantu", "Adat Bapukung", "Adat Berzanji Kelantan"],
+            correct: 2,
+            hint: "Lagu Bapukung didendangkan dalam dialek Banjar berserta selawat oleh kumpulan wanita."
+        },
+        {
+            id: 8,
+            q: "Petunjuk: Majlis yang dimulakan dengan bacaan doa kesyukuran dan jamuan makan tertutup bersama ahli keluarga terdekat sahaja.",
+            options: ["Adat Bapukung", "Tarian Alai Bubu", "Adat Menyambut Menantu Perempuan", "Adat Meminang"],
+            correct: 2,
+            hint: "Adat Menyambut Menantu di Kelantan dilaksanakan secara tertutup selaras ajaran Islam."
+        },
+        {
+            id: 9,
+            q: "Petunjuk: Tradisi yang berfungsi memberikan ketenteraman kepada bayi berusia 3 hingga 4 bulan yang kembung perut.",
+            options: ["Adat Menyambut Menantu", "Adat Bapukung", "Tarian Alai Bubu", "Adat Cukur Jambul"],
+            correct: 1,
+            hint: "Secara teknikal, Bapukung membantu menenteramkan bayi 3-4 bulan yang tidak selesa atau kembung perut."
+        },
+        {
+            id: 10,
+            q: "Petunjuk: Warisan mistik etnik Bisaya Sabah yang mempamerkan pergerakan bubu seolah-olah bernyawa apabila ditarikan.",
+            options: ["Adat Menyambut Menantu", "Adat Bapukung", "Tarian Alai Bubu", "Adat Berasik"],
+            correct: 2,
+            hint: "Tarian Alai Bubu berkait rapat dengan unsur mistik di mana bubu bergerak seolah-olah bernyawa."
+        },
+
+        // --- MENILAI KETEPATAN PERNYATAAN (BETUL / SALAH) ---
+        {
+            id: 11,
+            q: "Pernyataan: Adat Bapukung dalam masyarakat Banjar diamalkan pada waktu malam selepas solat Isyak.",
+            options: ["Betul", "Salah"],
+            correct: 1, // Salah
+            hint: "Salah. Adat Bapukung lazimnya diadakan di waktu siang (waktu Qailulah sebelum Zohor)."
+        },
+        {
+            id: 12,
+            q: "Pernyataan: Istilah 'sambut menantu' di Kelantan merujuk kepada tindakan menjemput pengantin perempuan selepas berada beberapa hari di rumahnya.",
+            options: ["Betul", "Salah"],
+            correct: 0, // Betul
+            hint: "Betul. Ini bersesuaian dengan maksud dan sejarah asal istilah tersebut di Kelantan."
+        },
+        {
+            id: 13,
+            q: "Pernyataan: Tarian Alai Bubu merupakan adat tradisi yang berasal daripada masyarakat Melayu Banjar di Bagan Serai, Perak.",
+            options: ["Betul", "Salah"],
+            correct: 1, // Salah
+            hint: "Salah. Tarian Alai Bubu berasal daripada etnik Bisaya di Beaufort, Sabah."
+        },
+        {
+            id: 14,
+            q: "Pernyataan: Peralatan utama untuk adat Bapukung termasuklah kain sarung atau batik serta kain Haduk atau Ijuk sebagai pengikat.",
+            options: ["Betul", "Salah"],
+            correct: 0, // Betul
+            hint: "Betul. Kain Haduk/Ijuk digunakan untuk mengikat kedudukan badan bayi agar selamat dalam posisi duduk."
+        },
+        {
+            id: 15,
+            q: "Pernyataan: Adat menyambut menantu perempuan di Kelantan wajib diadakan secara besar-besaran dan terbuka kepada seluruh kampung.",
+            options: ["Betul", "Salah"],
+            correct: 1, // Salah
+            hint: "Salah. Adat ini dilaksanakan secara tertutup, hanya melibatkan keluarga terdekat selaras ajaran Islam."
+        },
+        {
+            id: 16,
+            q: "Pernyataan: Lagu Bapukung berfungsi mendidik anak sejak kecil dengan menyampaikan sejarah kehidupan Nabi Muhammad SAW dan nilai moral.",
+            options: ["Betul", "Salah"],
+            correct: 0, // Betul
+            hint: "Betul. Lirik lagu tersebut mengandungi panduan, nasihat, dan sirah Nabi SAW."
+        },
+        {
+            id: 17,
+            q: "Pernyataan: Tarian Alai Bubu juga dikenali dengan nama 'Main Lukah' dalam kalangan masyarakat tempatan Sabah.",
+            options: ["Betul", "Salah"],
+            correct: 0, // Betul
+            hint: "Betul. Tarian Alai Bubu mempunyai nama gelaran lain seperti 'Main Lukah' dan 'Bubu Mengalai'."
+        },
+        {
+            id: 18,
+            q: "Pernyataan: Semasa adat Bapukung, posisi kedua-dua kaki bayi dimasukkan sepenuhnya secara melipat di dalam kain buaian.",
+            options: ["Betul", "Salah"],
+            correct: 1, // Salah
+            hint: "Salah. Kedua-dua kaki bayi dibiarkan terlunjur keluar dari buaian semasa badan diikat kemas."
+        },
+        {
+            id: 19,
+            q: "Pernyataan: Adat menyambut menantu di Kelantan bermatlamat untuk menjamin dan memastikan hubungan silaturrahim antara kedua-dua keluarga terjalin erat.",
+            options: ["Betul", "Salah"],
+            correct: 0, // Betul
+            hint: "Betul. Itu merupakan fungsi dan peranan utama adat tersebut dikekalkan."
+        },
+        {
+            id: 20,
+            q: "Pernyataan: Etnik Bisaya yang mengamalkan Tarian Alai Bubu kebanyakannya mendiami daerah Beaufort, Sabah.",
+            options: ["Betul", "Salah"],
+            correct: 0, // Betul
+            hint: "Betul. Daerah Beaufort merupakan lokaliti utama amalan tradisi tarian ini."
+        },
+
+        // --- SOALAN HASIL KEFAHAMAN INTEGRASI (ANEKA PILIHAN) ---
+        {
+            id: 21,
+            q: "Apakah fungsi utama penggunaan 'Kain Haduk atau Ijuk' dalam amalan tradisi Bapukung?",
+            options: ["Menghalang nyamuk", "Mengikat leher/badan bayi supaya selamat dalam posisi duduk", "Menjadi hiasan bumbung", "Menggantikan fungsi kain sarung batik"],
+            correct: 1,
+            hint: "Kain Haduk berfungsi memastikan posisi bayi duduk dengan selamat di dalam buaian."
+        },
+        {
+            id: 22,
+            q: "Mengapakah adat menyambut menantu di Kelantan diadakan beberapa hari selepas persandingan di rumah perempuan?",
+            options: ["Untuk mengutip sumbangan", "Untuk memberi laluan kepada tempoh pengantin bersama keluarga perempuan sebelum diambil ahli keluarga baharu", "Kerana menunggu kedatangan pelancong", "Untuk menanti persediaan Tarian Alai Bubu"],
+            correct: 1,
+            hint: "Ia dilakukan selepas pengantin baru berada selama beberapa hari di rumah pengantin perempuan."
+        },
+        {
+            id: 23,
+            q: "Dari manakah nama 'Alai Bubu' mendapat nama alat utamanya?",
+            options: ["Daripada nama sejenis alat muzik bertali", "Daripada nama kain pengikat bayi", "Daripada perkataan 'Bubu' iaitu alat tradisional menangkap ikan", "Daripada nama dialek kaum Banjar"],
+            correct: 2,
+            hint: "Bubu ialah alat menangkap ikan yang dijadikan prop utama dan dihias dalam tarian tersebut."
+        },
+        {
+            id: 24,
+            q: "Konsep 'Qailulah' yang diamalkan dalam tatacara Bapukung membawa maksud tidur sebentar selama...",
+            options: ["5 hingga 10 minit sebelum Subuh", "1 hingga 2 jam selepas Asar", "10 hingga 30 minit sebelum masuk waktu Zohor", "Sepanjang waktu pagi sehingga petang"],
+            correct: 2,
+            hint: "Qailulah bermaksud tidur sebentar selama 10 hingga 30 minit sebelum masuknya waktu solat Zohor."
+        },
+        {
+            id: 25,
+            q: "Perkataan 'blarok' dalam konteks adat perkahwinan masyarakat Kelantan bermaksud...",
+            options: ["Memasak secara bergotong-royong", "Berarak beramai-ramai menuju ke rumah pengantin lelaki", "Membaca doa kesyukuran", "Menari tarian tradisional tradisional Sabah"],
+            correct: 1,
+            hint: "Blarok merujuk kepada perbuatan berarak menghantar pasangan pengantin."
+        },
+        {
+            id: 26,
+            q: "Apakah nilai falsafah budaya paling utama yang cuba disampaikan melalui dendangan Lagu Bapukung?",
+            options: ["Mendedahkan taktik menangkap ikan", "Harapan agar anak menjadi sholeh/soleha dan patuh ajaran Islam", "Menggalakkan perkahwinan tertutup", "Menceritakan sejarah pembukaan Bagan Serai"],
+            correct: 1,
+            hint: "Lagu Pukong mengandungi doa dan harapan ibu bapa agar anak menjadi insan yang soleh/solehah kelak."
+        },
+        {
+            id: 27,
+            q: "Apakah persamaan unsur yang mendasari kedua-dua adat Bapukung (Perak) dan adat Menyambut Menantu (Kelantan)?",
+            options: ["Kedua-duanya menggunakan peralatan mistik menangkap ikan", "Kedua-duanya sarat dengan nilai keagamaan dan penerapan ajaran Islam", "Kedua-duanya berasal dari kepulauan Borneo Sabah", "Kedua-duanya dilakukan pada waktu malam sahaja"],
+            correct: 1,
+            hint: "Kedua-dua amalan ini menekankan elemen Islam, seperti selawat/doa selamat serta konsep majlis tertutup."
+        },
+        {
+            id: 28,
+            q: "Bagaimanakah kedudukan fizikal bayi diletakkan pada langkah pertama pelaksanaan Bapukung sebelum diposisikan duduk?",
+            options: ["Bayi terus diikat berdiri", "Bayi dimasukkan ke dalam buaian dalam posisi berbaring terlebih dahulu", "Bayi diletakkan di atas lantai bumbung", "Bayi didudukkan di atas kain Haduk"],
+            correct: 1,
+            hint: "Langkah pertama tatacara pelaksanaan adalah memasukkan bayi ke dalam buaian pada posisi berbaring."
+        },
+        {
+            id: 29,
+            q: "Adat Menyambut Menantu Perempuan di Kelantan dimulakan secara rasmi dengan upacara...",
+            options: ["Tarian Alai Bubu bersama tetamu", "Bacaan doa kesyukuran diikuti jamuan makan", "Nyanyian lagu dialek Banjar", "Ikatan kain Haduk pada pengantin"],
+            correct: 1,
+            hint: "Majlis bermula dengan bacaan doa kesyukuran diikuti jamuan makan bersama keluarga terdekat."
+        },
+        {
+            id: 30,
+            q: "Apakah peranan utama tradisi adat resam (seperti Bapukung, Menyambut Menantu, Alai Bubu) dalam komuniti masing-masing?",
+            options: ["Membazirkan masa generasi muda", "Memperkuatkan rasa kebersamaan, kekeluargaan, dan memastikan warisan budaya terus hidup", "Menggantikan peranan undang-undang moden", "Menghapuskan kebudayaan etnik lain di Malaysia"],
+            correct: 1,
+            hint: "Tradisi-tradisi ini berperanan memperkukuh silaturahim, kebersamaan komuniti, serta memelihara warisan bangsa."
+        }
+    ];
+
+    // Menyimpan status soalan yang salah untuk sistem ulangan (Kunci Fakta Dinamik)
+    let wrongQuestionsList = [];
+    let isRetryMode = false;
+
+    function renderQuestions(targetList) {
+        const container = document.getElementById('questions-container');
+        container.innerHTML = '';
+
+        targetList.forEach((qData, index) => {
+            const card = document.createElement('div');
+            card.className = `question-card ${isRetryMode ? 'wrong-retry' : ''}`;
+            card.id = `q-card-${qData.id}`;
+
+            const qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.innerText = `${index + 1}. ${qData.q}`;
+            card.appendChild(qText);
+
+            const optionsList = document.createElement('ul');
+            optionsList.className = 'options-list';
+
+            qData.options.forEach((opt, optIdx) => {
+                const li = document.createElement('li');
+                li.className = 'option-item';
+
+                const label = document.createElement('label');
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `question-${qData.id}`;
+                radio.value = optIdx;
+
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(` ${opt}`));
+                li.appendChild(label);
+                optionsList.appendChild(li);
+            });
+
+            card.appendChild(optionsList);
+
+            const feedback = document.createElement('div');
+            feedback.className = 'feedback';
+            feedback.id = `feedback-${qData.id}`;
+            card.appendChild(feedback);
+
+            container.appendChild(card);
+        });
+    }
+
+    // Paparan awal bagi kesemua 30 soalan
+    renderQuestions(quizData);
+
+    document.getElementById('submit-btn').addEventListener('click', function() {
+        const currentList = isRetryMode ? wrongQuestionsList : quizData;
+        let correctCount = 0;
+        let tempWrongList = [];
+        let allAnswered = true;
+
+        // Semak jawapan bagi setiap soalan yang sedang dipaparkan
+        currentList.forEach(qData => {
+            const selectedOpt = document.querySelector(`input[name="question-${qData.id}"]:checked`);
+            const feedbackBox = document.getElementById(`feedback-${qData.id}`);
+            const cardBox = document.getElementById(`q-card-${qData.id}`);
+
+            if (!selectedOpt) {
+                allAnswered = false;
+                return;
+            }
+
+            const answerIndex = parseInt(selectedOpt.value);
+
+            if (answerIndex === qData.correct) {
+                correctCount++;
+                feedbackBox.className = 'feedback correct';
+                feedbackBox.innerText = `Tepat! Maklum balas: ${qData.hint}`;
+                cardBox.classList.remove('wrong-retry');
+            } else {
+                tempWrongList.push(qData);
+                feedbackBox.className = 'feedback wrong';
+                feedbackBox.innerText = `Salah! Penerangan: ${qData.hint}`;
+            }
+        });
+
+        if (!allAnswered) {
+            alert("Harap maaf, sila pastikan murid menjawab kesemua soalan yang dipaparkan sebelum menyemak!");
+            return;
+        }
+
+        const statusBar = document.getElementById('status-bar');
+        const resultContainer = document.getElementById('result-container');
+
+        if (!isRetryMode) {
+            // Mod Utama (30 Soalan Asal)
+            resultContainer.style.display = 'block';
+            resultContainer.innerHTML = `<h2>Keputusan Semakan: ${correctCount} / 30 Tepat!</h2>`;
+            
+            if (tempWrongList.length > 0) {
+                wrongQuestionsList = tempWrongList;
+                isRetryMode = true;
+                statusBar.innerText = `Murid menjawab ${correctCount} soalan dengan tepat. Sila betulkan ${wrongQuestionsList.length} soalan yang salah di bawah!`;
+                statusBar.style.background = "#ffe4e6";
+                statusBar.style.color = "#b91c1c";
+                this.innerText = "ULANG JAWAB SOALAN SALAH";
+                
+                // Bina semula paparan hanya untuk soalan yang salah sahaja
+                setTimeout(() => {
+                    renderQuestions(wrongQuestionsList);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 3000); // Memberikan masa 3 saat untuk murid membaca maklum balas/penerangan kesalahan
+            } else {
+                statusBar.innerText = "Syabas! Semua 30 soalan berjaya dijawab dengan tepat! Murid anda sedia untuk JKKN!";
+                statusBar.style.background = "#dcfce7";
+                statusBar.style.color = "#15803d";
+                this.style.display = 'none';
+            }
+        } else {
+            // Mod Ulangan (Memaksa membetulkan kesilapan)
+            if (tempWrongList.length > 0) {
+                wrongQuestionsList = tempWrongList;
+                statusBar.innerText = `Masih ada ${wrongQuestionsList.length} soalan yang salah. Cuba lagi sehingga semuanya tepat!`;
+                
+                setTimeout(() => {
+                    renderQuestions(wrongQuestionsList);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 3000);
+            } else {
+                // Semua soalan ulangan telah diperbetulkan dengan betul
+                resultContainer.innerHTML = `<h2>Tahniah! Semua soalan telah berjaya diperbetulkan dengan tepat! 30/30</h2>`;
+                statusBar.innerText = "Luar biasa! Murid telah berjaya menguasai kesemua kunci fakta adat resam!";
+                statusBar.style.background = "#dcfce7";
+                statusBar.style.color = "#15803d";
+                this.style.display = 'none';
+                
+                // Papar semula kesemua soalan asal sebagai rujukan lengkap
+                setTimeout(() => {
+                    isRetryMode = false;
+                    renderQuestions(quizData);
+                    // Tandakan semua sebagai betul
+                    quizData.forEach(q => {
+                        document.getElementById(`feedback-${q.id}`).className = 'feedback correct';
+                        document.getElementById(`feedback-${q.id}`).innerText = `Tepat! ${q.hint}`;
+                    });
+                }, 2000);
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
